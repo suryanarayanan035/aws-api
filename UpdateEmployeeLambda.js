@@ -1,41 +1,49 @@
+const AWS = require("aws-sdk");
+const documentClient = new AWS.DynamoDB.DocumentClient();
+
 exports.handler = async (event) => {
-    const AWS = require("aws-sdk");
-    const documentClient = new AWS.DynamoDB.DocumentClient();
-    const {empid,name,role} = JSON.parse(event.body)
+    // TODO implement
     
+    const {empid,name,salary} = JSON.parse(event.body);
     const params = {
-        TableName:"employees",
+        TableName:"employee",
         Key:{
-            "name":name,
-            "role":role,
-            
+            empid: empid
         },
-        UpdateExpression: "set name=:name role=:role",
-        ConditionExpression:"empid == :empid",
-        ExpressionAttributeValues:{
-            ":name":name,
-            ":role":role,
-            ":empid":empid
-        },
-        ReturnValues:"UPDATED_NEW"
-        
+        UpdateExpression:"set salary=:salary,#n=:name",
+        ConditionExpression:"empid = :empid",
+        ExpressionAttributeNames:{
+                '#n': "name"
+            },
+         ExpressionAttributeValues:{
+        ":name": name,
+        ":empid": empid,
+        ":salary": salary,
+    },
+    ReturnValues:"UPDATED_NEW"
     };
-    
     try {
-        const returnData = documentClient.update(params).promise();
+        await documentClient.update(params,function(err,data)
+        {
+            if(err!=null){console.log("Error Occured");}
+            else {console.log("Data updation Successfull")}
+        }).promise();
         const response = {
-        statusCode: 200,
-        body: JSON.stringify(returnData),
-    };
-    return response;
-    } 
-    catch (e) {
+            statusCode: 200,
+            body: JSON.stringify('Data saved successfully')
+            
+        }
+        ;
+        return response;
+    } catch (e) {
         const response = {
-        statusCode: 500,
-        body: JSON.stringify("some error occured"),
-    };
-    return response;
+            statusCode: 500,
+            body: JSON.stringify('Data not saved'+e)
+            
+        };
+        
+        return response;
     }
-    
-    
+  
+  
 };
